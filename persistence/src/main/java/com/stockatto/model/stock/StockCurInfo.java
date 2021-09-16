@@ -1,7 +1,12 @@
 package com.stockatto.model.stock;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import com.stockatto.model.common.BaseEntity;
@@ -20,9 +25,9 @@ public class StockCurInfo extends BaseEntity {
 
 	private static final long serialVersionUID = -8762343975002442408L;
 
-	// @OneToOne(fetch = FetchType.LAZY)
-	// @JoinColumn(name = "STOCK_META_ID", foreignKey = @ForeignKey(name = "FK_STOCK_META_ID"))
-	// private StockMetaData stockMetaData;
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "STOCK_META_ID", foreignKey = @ForeignKey(name = "FK_STOCK_META_ID"))
+	private StockMetaData stockMetaData;
 
 	@Column
 	private Long marketSum; // 시총

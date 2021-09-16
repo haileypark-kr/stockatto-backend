@@ -33,10 +33,10 @@ public class StockMetaData extends BaseEntity {
 	@Column(length = 255, nullable = false)
 	private String name;
 
-	@Column(nullable = false, unique = true)
+	@Column(nullable = false)
 	private String code;
 
-	@OneToOne(fetch = FetchType.LAZY)
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "STOCK_CUR_INFO_ID", foreignKey = @ForeignKey(name = "FK_STOCK_CUR_INFO_ID"))
 	private StockCurInfo stockCurInfo;
 

@@ -28,4 +28,9 @@ public class StockCurInfoConverter extends AbstractDataConverter<Map<String, Obj
 
 		return target;
 	}
+
+	// target의 기존 데이터는 가만히 두고, 바뀐거만 업데이트
+	public StockCurInfo convertRetainingOriginalTarget(Map<String, Object> source, StockCurInfo target) {
+		return this.convert(source, target);
+	}
 }

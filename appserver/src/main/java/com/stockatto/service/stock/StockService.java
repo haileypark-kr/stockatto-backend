@@ -1,22 +1,16 @@
 package com.stockatto.service.stock;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stockatto.converter.StockCurInfoConverter;
 import com.stockatto.dto.stock.StockDto;
 import com.stockatto.model.stock.StockCurInfo;
 import com.stockatto.model.stock.StockMetaData;
+import com.stockatto.repository.stock.StockCurInfoRepository;
 import com.stockatto.repository.stock.StockMetaRepository;
+import com.stockatto.utils.FinanceUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,67 +19,56 @@ import lombok.RequiredArgsConstructor;
 public class StockService {
 
 	private final StockMetaRepository stockMetaRepository;
+	private final StockCurInfoRepository stockCurInfoRepository;
 
 	public void createStock(StockDto stockDto) {
-		StockMetaData stockMetaData = StockMetaData.builder().code(stockDto.getCode()).name(stockDto.getName()).build();
+		Optional<StockMetaData> stockMetaDataSearchOptional = this.stockMetaRepository.findByCode(stockDto.getCode());
 
+		StockCurInfo stockCurInfo = new StockCurInfo();
 		try {
-			stockMetaData.setStockCurInfo(this.getCurrentData(stockDto.getCode()));
+			stockCurInfo = FinanceUtils.getCurrentData(stockDto.getCode());
 		} catch (IOException e) {
-			e.printStackTrace();
+			//	exception raising
 		}
+
+		StockMetaData stockMetaData = null;
+		if (stockMetaDataSearchOptional.isEmpty()) {
+			stockMetaData = StockMetaData.builder()
+				.code(stockDto.getCode())
+				.name(stockDto.getName())
+				.build();
+		} else {
+			stockMetaData = stockMetaDataSearchOptional.get();
+		}
+
+		stockCurInfo.setStockMetaData(stockMetaData);
+		stockMetaData.setStockCurInfo(stockCurInfo);
 
 		this.stockMetaRepository.save(stockMetaData);
 	}
 
-	public StockCurInfo getCurrentData(String code) throws IOException {
+	public void updateStockCurInfo(StockDto stockDto) {
+		Optional<StockMetaData> stockMetaDataSearchOptional = this.stockMetaRepository.findByCode(stockDto.getCode());
 
-		Map<String, Object> info = this.getCurrentStockPriceByRest(code);
-		StockCurInfoConverter converter = new StockCurInfoConverter();
-		return converter.convert(info);
-	}
+		if (stockMetaDataSearchOptional.isPresent()) {
+			StockMetaData stockMetaDataSearch = stockMetaDataSearchOptional.get();
 
-	private static final String stockInfoReqUrl = "https://api.finance.naver.com/service/itemSummary.nhn?itemcode=";
+			StockCurInfo stockCurInfo = new StockCurInfo();
+			try {
+				stockCurInfo = FinanceUtils.getCurrentData(stockDto.getCode());
 
-	private String restCallGet(String paramUrl) {
-		String result = null;
+			} catch (IOException e) {
+				//	exception raising
 
-		try {
-			URL url = new URL(paramUrl);
-			HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-			conn.setRequestMethod("GET");
-			conn.setRequestProperty("X-Data-Type", "application/json");
-			conn.setRequestProperty("Content-Type", "application/json");
-			conn.setDoOutput(true);
-
-			OutputStreamWriter osw = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
-			osw.flush();
-			osw.close();
-
-			if (conn.getResponseCode() == 200) {
-				BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-				StringBuilder sb = new StringBuilder();
-				String line = "";
-				while ((line = br.readLine()) != null) {
-					sb.append(line);
-				}
-				result = sb.toString();
-				br.close();
 			}
 
-			conn.disconnect();
+			stockCurInfo.setStockMetaData(stockMetaDataSearch);
+			stockMetaDataSearch.setStockCurInfo(stockCurInfo);
 
-		} catch (IOException e) {
+			this.stockMetaRepository.save(stockMetaDataSearch);
+		} else {
+			//	exception raising
 		}
-
-		return result;
 	}
 
-	public Map<String, Object> getCurrentStockPriceByRest(String code) throws IOException {
-		String stockInfo = restCallGet(stockInfoReqUrl + code);
-
-		Map<String, Object> result = new ObjectMapper().readValue(stockInfo, HashMap.class);
-
-		return result;
-	}
 }

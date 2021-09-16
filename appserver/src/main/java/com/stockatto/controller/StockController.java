@@ -21,8 +21,15 @@ public class StockController {
 	public String create(@RequestBody StockDto stockDto) {
 
 		this.stockService.createStock(stockDto);
-		
+
 		return "Success";
 	}
 
+	@PostMapping("/price/update")
+	public String updatePrice(@RequestBody StockDto stockDto) {
+
+		this.stockService.updateStockCurInfo(stockDto);
+
+		return "Success";
+	}
 }

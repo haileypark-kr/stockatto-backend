@@ -1,0 +1,5 @@
+rootProject.name = 'stockatto-backend'
+include 'persistence'
+include 'batch'
+include 'appserver'
+
